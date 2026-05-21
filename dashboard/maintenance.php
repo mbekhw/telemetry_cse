@@ -1,14 +1,12 @@
 <?php
-require 'config.php';
-dashboard_start_session();
+session_start();
 if (!isset($_SESSION['username'])) {
     http_response_code(401);
     echo json_encode(['error' => 'authentication required']);
     exit;
 }
 
-header('Content-Type: application/json');
-
+$maintenancePath = __DIR__ . '/maintenance.json';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payload = json_decode(file_get_contents('php://input'), true);
     $note = trim($payload['note'] ?? '');
@@ -17,15 +15,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['error' => 'note is required']);
         exit;
     }
-    $items = dashboard_load_maintenance();
+
+    $items = [];
+    if (file_exists($maintenancePath)) {
+        $items = json_decode(file_get_contents($maintenancePath), true);
+        if (!is_array($items)) {
+            $items = [];
+        }
+    }
+
     $items[] = [
         'created' => date('c'),
         'note' => $note,
     ];
-    dashboard_save_maintenance($items);
+    file_put_contents($maintenancePath, json_encode($items, JSON_PRETTY_PRINT));
+
     echo json_encode(['success' => true]);
     exit;
 }
 
-$items = dashboard_load_maintenance();
+$items = [];
+if (file_exists($maintenancePath)) {
+    $items = json_decode(file_get_contents($maintenancePath), true);
+    if (!is_array($items)) {
+        $items = [];
+    }
+}
+
 echo json_encode($items);

@@ -1,6 +1,5 @@
 <?php
-require 'config.php';
-dashboard_start_session();
+session_start();
 if (!isset($_SESSION['username'])) {
     header('Location: ../login.php');
     exit;
@@ -10,26 +9,29 @@ $page_title = 'Dashboard Settings';
 include '../includes/header.html';
 include '../includes/navbar.html';
 
+$settingsPath = __DIR__ . '/settings.json';
+$settings = [];
+if (file_exists($settingsPath)) {
+    $settings = json_decode(file_get_contents($settingsPath), true);
+    if (!is_array($settings)) {
+        $settings = [];
+    }
+}
+
 $success = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $config = dashboard_load_config();
-    $config['api_base_url'] = trim($_POST['api_base_url'] ?? '');
-    $config['poll_interval'] = (int) ($_POST['poll_interval'] ?? 60);
-    $config['azure_storage_account'] = trim($_POST['azure_storage_account'] ?? '');
-    $config['azure_storage_container'] = trim($_POST['azure_storage_container'] ?? '');
-    $config['azure_sas_token'] = trim($_POST['azure_sas_token'] ?? '');
-    $config['blob_local_path'] = trim($_POST['blob_local_path'] ?? __DIR__ . '/storage');
-    dashboard_save_config($config);
+    $settings['api_base_url'] = trim($_POST['api_base_url'] ?? '');
+    $settings['poll_interval'] = max(10, (int) ($_POST['poll_interval'] ?? 60));
+    $settings['azure_blob_url'] = trim($_POST['azure_blob_url'] ?? '');
+    $settings['azure_sas_token'] = trim($_POST['azure_sas_token'] ?? '');
+    file_put_contents($settingsPath, json_encode($settings, JSON_PRETTY_PRINT));
     $success = true;
 }
 
-$config = dashboard_load_config();
-$apiUrl = dashboard_get_setting('api_base_url', 'https://api.entreprise-b.com');
-$pollInterval = dashboard_get_setting('poll_interval', 60);
-$azureAccount = dashboard_get_setting('azure_storage_account', '');
-$azureContainer = dashboard_get_setting('azure_storage_container', '');
-$azureSas = dashboard_get_setting('azure_sas_token', '');
-$blobLocalPath = dashboard_get_setting('blob_local_path', __DIR__ . '/storage');
+$apiUrl = htmlspecialchars($settings['api_base_url'] ?? 'https://api.entreprise-b.com');
+$pollInterval = htmlspecialchars($settings['poll_interval'] ?? 60);
+$azureBlobUrl = htmlspecialchars($settings['azure_blob_url'] ?? '');
+$azureSasToken = htmlspecialchars($settings['azure_sas_token'] ?? '');
 ?>
 
 <div class="container py-4">
@@ -42,32 +44,23 @@ $blobLocalPath = dashboard_get_setting('blob_local_path', __DIR__ . '/storage');
     <form method="post" class="mb-4">
         <div class="form-group">
             <label for="api_base_url">API Base URL</label>
-            <input type="text" id="api_base_url" name="api_base_url" class="form-control" value="<?php echo htmlspecialchars($apiUrl); ?>" placeholder="https://api.entreprise-b.com">
-            <small class="form-text text-muted">This URL is used for real-time reactor metrics.</small>
+            <input type="text" id="api_base_url" name="api_base_url" class="form-control" value="<?php echo $apiUrl; ?>" placeholder="https://api.entreprise-b.com">
+            <small class="form-text text-muted">Use this URL to fetch the reactor data.</small>
         </div>
         <div class="form-group">
             <label for="poll_interval">Polling interval (seconds)</label>
-            <input type="number" id="poll_interval" name="poll_interval" class="form-control" value="<?php echo htmlspecialchars($pollInterval); ?>" min="10">
+            <input type="number" id="poll_interval" name="poll_interval" class="form-control" value="<?php echo $pollInterval; ?>" min="10">
         </div>
         <hr>
         <h5>Azure Blob Storage</h5>
         <div class="form-group">
-            <label for="azure_storage_account">Azure Storage account</label>
-            <input type="text" id="azure_storage_account" name="azure_storage_account" class="form-control" value="<?php echo htmlspecialchars($azureAccount); ?>">
+            <label for="azure_blob_url">Azure Blob base URL</label>
+            <input type="text" id="azure_blob_url" name="azure_blob_url" class="form-control" value="<?php echo $azureBlobUrl; ?>" placeholder="https://<account>.blob.core.windows.net/<container>">
         </div>
         <div class="form-group">
-            <label for="azure_storage_container">Container name</label>
-            <input type="text" id="azure_storage_container" name="azure_storage_container" class="form-control" value="<?php echo htmlspecialchars($azureContainer); ?>">
-        </div>
-        <div class="form-group">
-            <label for="azure_sas_token">SAS token</label>
-            <textarea id="azure_sas_token" name="azure_sas_token" class="form-control" rows="2"><?php echo htmlspecialchars($azureSas); ?></textarea>
-            <small class="form-text text-muted">Example: ?sv=2024-01-01&ss=b&srt=sco&sp=rw&... (leave blank to use local storage)</small>
-        </div>
-        <div class="form-group">
-            <label for="blob_local_path">Local storage path</label>
-            <input type="text" id="blob_local_path" name="blob_local_path" class="form-control" value="<?php echo htmlspecialchars($blobLocalPath); ?>">
-            <small class="form-text text-muted">If Azure is not configured, the dashboard saves historical files here.</small>
+            <label for="azure_sas_token">Azure SAS token</label>
+            <input type="text" id="azure_sas_token" name="azure_sas_token" class="form-control" value="<?php echo $azureSasToken; ?>" placeholder="?sv=...&ss=...&srt=...&sp=...">
+            <small class="form-text text-muted">Leave blank to keep saving locally in dashboard/storage.</small>
         </div>
         <button type="submit" class="btn btn-primary">Save settings</button>
     </form>
