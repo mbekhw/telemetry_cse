@@ -1,5 +1,5 @@
 {
-    "api_base_url": "http:\/\/localhost:5000\/index.php",
+    "api_base_url": "https:\/\/api-cse-telemetry-gsexaxeqcxb7hfck.francecentral-01.azurewebsites.net\/",
     "poll_interval": 60,
     "azure_blob_url": "https:\/\/storageaccount1ot.blob.core.windows.net\/containeriot",
     "azure_sas_token": "sv=2026-02-06&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2026-08-03T23:48:00Z&st=2026-06-04T15:33:00Z&spr=https,http&sig=rwU8YPimJMLymwFq2UBWq37ZUlRLaREwGVpCQAm5XzI%3D"

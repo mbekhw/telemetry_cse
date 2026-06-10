@@ -284,7 +284,10 @@ document.addEventListener('DOMContentLoaded', () => {
         temperature.textContent = data.temperature !== undefined ? `${data.temperature} °C` : 'N/A';
         pressure.textContent = data.pressure !== undefined ? `${data.pressure} bar` : 'N/A';
         const statusClass = (data.status || '').toLowerCase();
-        alertBadge.textContent = data.alerts || 'No alerts';
+
+        // BEST PRACTICE: Do NOT use inner HTML with unsanitized data in applications.
+        alertBadge.innerHTML = data.alerts || 'No alerts';
+        
         alertBadge.className = 'badge ' + (statusClass === 'critical' ? 'badge-danger' : statusClass === 'warning' ? 'badge-warning' : 'badge-success');
 
         const detailsBody = document.getElementById('realtimeDetails');
@@ -342,5 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshSummaryBtn = document.getElementById('refreshSummaryBtn');
     if (refreshSummaryBtn) {
         refreshSummaryBtn.addEventListener('click', loadSummaryTable);
+        refreshSummaryBtn.addEventListener('click', fetchHistory);
     }
 });

@@ -230,7 +230,7 @@ include '../includes/navbar.html';
             <div class="card dashboard-card">
                 <div class="card-header">Historical data files</div>
                 <div class="card-body">
-                    <p class="text-muted">Each API response is saved as a local JSON file in dashboard/storage.</p>
+                    <p class="text-muted">Each sensor reading is saved locally or in the cloud.</p>
                     <div class="row">
                         <div class="col-md-4">
                             <h6>Recent files</h6>
