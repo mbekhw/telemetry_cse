@@ -1,0 +1,37 @@
+# This is a comment. Comments below are hints. They are ignored when the code runs.
+# Step 1: Define workflow name. (replace ____________ with a workflow name of your choice, for example "SAST")
+name: SAST 
+# Step 2: 
+  # You can choose any combination of triggers below, or keep all of them.
+  # The triggers define at what moment the Semgrep scan needs to run.
+  # Make sure to keep the option to run manually.
+on:
+  push:                   # Trigger on push events
+  workflow_dispatch:      # Trigger manually via GitHub UI
+  workflow_call:          # Triggered by other workflows
+  pull_request:           # Trigger on pull requests
+# Step 3: Define the steps that are necessary to run your Semgrep scan. These steps are called jobs. They will run on a VM on GitHub side, since we are defining a GitHub action.
+jobs:
+  semgrep_actions:                # This is the Job ID: a descriptive name for your job
+    permissions: write-all        # Needed to upload a SARIF file, a standard format to report static scan results
+    name: Semgrep                 # Display name of the job
+    runs-on: ubuntu-latest       # Options: ubuntu-latest | windows-latest | macos-latest
+    # Hint: Use Linux type OS for lightweight and fast execution
+    # The job will run inside a container of our choosing
+    container:
+      image: returntocorp/semgrep
+      # Hint: Using Semgrep's official container ensures all dependencies are ready
+    # Step 4: Define the steps of our job
+    steps:
+      - name: Checkout        # Options: choose any name you want. This step checks out our code.
+        uses: actions/checkout@v6        # Options: actions/checkout@v6 | actions/setup-node@v3 | docker/setup-buildx-action@v2
+        # Hint: Checkout is needed so that semgrep can access your repo code
+
+      - name: Run semgrep analysis (blocking mode)
+        run: semgrep scan --sarif --sarif-output=semgrep.sarif --error
+
+      - name: Upload SARIF file to GitHub #The last step uploads our results to GitHub
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
